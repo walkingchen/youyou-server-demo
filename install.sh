@@ -26,15 +26,14 @@ sudo apt update
 echo ""
 echo "步骤 2/5: 安装系统依赖..."
 echo "  - Python 3"
-echo "  - picamera（摄像头库）"
-echo "  - libraspberrypi（GPU 库）"
-sudo apt install -y python3-pip python3-picamera libraspberrypi-bin libraspberrypi0
+echo "  - picamera2（摄像头库）"
+echo "  - numpy 和 Pillow（图像处理）"
+sudo apt install -y python3-pip python3-picamera2 python3-numpy python3-pil
 
 echo ""
-echo "步骤 3/5: 检查 legacy camera 支持..."
-if ! grep -q "start_x=1" /boot/config.txt 2>/dev/null && ! grep -q "start_x=1" /boot/firmware/config.txt 2>/dev/null; then
-    echo "  ℹ️  提示：如果摄像头无法工作，请运行 'sudo raspi-config' 启用 Legacy Camera"
-fi
+echo "步骤 3/5: 检查摄像头支持..."
+echo "  ℹ️  picamera2 适用于最新的 Raspberry Pi OS"
+echo "  ℹ️  确保摄像头已在 raspi-config 中启用"
 
 echo ""
 echo "步骤 4/5: 安装 Flask..."
@@ -50,9 +49,9 @@ fi
 echo ""
 echo "步骤 5/5: 验证安装..."
 python3 -c "import flask; print(f'  ✓ Flask {flask.__version__}')" 2>/dev/null || echo "  ✗ Flask 未安装"
-python3 -c "from picamera import PiCamera; print('  ✓ picamera')" 2>/dev/null || echo "  ✗ picamera 未安装 (可能需要退出虚拟环境)"
-echo "  检查 libbcm_host.so..."
-ldconfig -p | grep -q libbcm_host && echo "  ✓ libbcm_host.so" || echo "  ✗ libbcm_host.so 未找到 (需要安装 libraspberrypi-bin)"
+python3 -c "from picamera2 import Picamera2; print('  ✓ picamera2')" 2>/dev/null || echo "  ✗ picamera2 未安装 (可能需要退出虚拟环境)"
+python3 -c "import numpy; print(f'  ✓ numpy {numpy.__version__}')" 2>/dev/null || echo "  ✗ numpy 未安装"
+python3 -c "from PIL import Image; print('  ✓ Pillow')" 2>/dev/null || echo "  ✗ Pillow 未安装"
 
 echo ""
 echo "=================================="

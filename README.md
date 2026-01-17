@@ -50,7 +50,7 @@ chmod +x install.sh
 
 **方式二：手动安装**
 
-**重要提示**：树莓派建议使用系统包管理器安装 picamera，而不是通过 pip 安装。
+**重要提示**：树莓派建议使用系统包管理器安装 picamera2 及其依赖，而不是通过 pip 安装。
 
 ```bash
 # 更新系统
@@ -58,7 +58,7 @@ sudo apt update
 sudo apt upgrade
 
 # 安装系统依赖（推荐方式）
-sudo apt install -y python3-pip python3-picamera libraspberrypi-bin libraspberrypi0
+sudo apt install -y python3-pip python3-picamera2 python3-numpy python3-pil
 
 # 克隆或下载项目
 cd ~
@@ -70,9 +70,9 @@ pip3 install -r requirements.txt --break-system-packages
 ```
 
 **说明**：
-- `python3-picamera`: 树莓派官方摄像头库（适用于旧版系统）
-- `libraspberrypi-bin`: 提供 GPU 库（包含 libbcm_host.so）
-- `libraspberrypi0`: Broadcom GPU 运行时库
+- `python3-picamera2`: 树莓派官方摄像头库（新版本，推荐使用）
+- `python3-numpy`: 数值计算库（picamera2 依赖）
+- `python3-pil`: Pillow 图像处理库（系统包名为 PIL）
 - `--break-system-packages`: Python 3.11+ 需要此参数在系统 Python 中安装包
 
 **替代方案**：如果你使用虚拟环境：
@@ -167,9 +167,12 @@ youyou-server-demo/
 ```python
 def init_camera():
     global camera
-    camera = PiCamera()
-    camera.resolution = (640, 480)
-    camera.framerate = 24
+    camera = Picamera2()
+    config = camera.create_video_configuration(
+        main={"size": (640, 480), "format": "RGB888"}
+    )
+    camera.configure(config)
+    camera.start()
     time.sleep(2)  # 等待摄像头稳定
 ```
 
@@ -177,17 +180,15 @@ def init_camera():
 
 ```python
 def generate_frames():
-    output = StreamingOutput()
-    camera.start_recording(output, format='mjpeg')
-    try:
-        while True:
-            with output.condition:
-                output.condition.wait()
-                frame = output.frame
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-    finally:
-        camera.stop_recording()
+    while True:
+        frame = camera.capture_array()
+        img = Image.fromarray(frame)
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format='JPEG', quality=85)
+        img_byte_arr.seek(0)
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + img_byte_arr.read() + b'\r\n')
+        time.sleep(0.033)  # 约30fps
 ```
 
 ### 拍照功能
@@ -197,7 +198,7 @@ def generate_frames():
 def take_photo():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"photo_{timestamp}.jpg"
-    camera.capture(f"shots/{filename}")
+    camera.capture_file(f"shots/{filename}")
     return jsonify({'success': True, 'filename': filename})
 ```
 
@@ -222,45 +223,35 @@ sudo usermod -a -G video $USER
 # 重新登录以应用更改
 ```
 
-### 问题3：picamera 导入错误
+### 问题3：picamera2 导入错误
 
 ```bash
 # 确保使用 Python 3
 python3 --version
 
-# 重新安装 picamera
-sudo apt install -y python3-picamera
+# 重新安装 picamera2 及依赖
+sudo apt install -y python3-picamera2 python3-numpy python3-pil
 ```
 
-### 问题4：libbcm_host.so 找不到（OSError）
+### 问题4：numpy 或 Pillow 导入错误
 
-**错误信息**：`OSError: libbcm_host.so: cannot open shared object file: No such file or directory`
-
-**原因**：缺少 Broadcom GPU 库，这是 picamera 必需的系统库。
+**错误信息**：`ModuleNotFoundError: No module named 'numpy'` 或 `No module named 'PIL'`
 
 **解决方案**：
 
 ```bash
-# 方案 1：安装必需的系统库（推荐）
-sudo apt install -y libraspberrypi-bin libraspberrypi0
+# 安装必需的依赖
+sudo apt install -y python3-numpy python3-pil
 
-# 验证库是否安装成功
-ldconfig -p | grep libbcm_host
-
-# 方案 2：如果在虚拟环境中，退出虚拟环境使用系统 Python
+# 如果在虚拟环境中
 deactivate  # 退出虚拟环境
 python3 camera_local.py  # 使用系统 Python 运行
-
-# 方案 3：启用 Legacy Camera 支持
-sudo raspi-config
-# 选择：Interface Options -> Legacy Camera -> Enable
-sudo reboot
 ```
 
 **重要提示**：
-- picamera 库依赖树莓派特定的硬件库
-- 虚拟环境中的 pip 安装可能缺少系统依赖
-- **推荐使用系统的 python3-picamera**，不要在虚拟环境中用 pip 安装
+- picamera2 依赖 numpy 和 Pillow
+- **推荐使用系统包安装**，不要在虚拟环境中用 pip 安装
+- 系统包提供预编译的二进制文件，避免编译错误
 
 ### 问题5：网页无法访问
 
@@ -280,7 +271,8 @@ sudo reboot
 ## 技术栈
 
 - **后端**：Python 3, Flask
-- **摄像头库**：picamera（适用于旧版 Raspberry Pi OS）
+- **摄像头库**：picamera2（适用于最新 Raspberry Pi OS）
+- **图像处理**：Pillow, numpy
 - **前端**：HTML5, CSS3, JavaScript
 - **硬件**：Raspberry Pi, Camera Module
 
