@@ -58,7 +58,7 @@ sudo apt update
 sudo apt upgrade
 
 # 安装系统依赖（推荐方式）
-sudo apt install -y python3-pip python3-picamera
+sudo apt install -y python3-pip python3-picamera libraspberrypi-bin libraspberrypi0
 
 # 克隆或下载项目
 cd ~
@@ -71,6 +71,8 @@ pip3 install -r requirements.txt --break-system-packages
 
 **说明**：
 - `python3-picamera`: 树莓派官方摄像头库（适用于旧版系统）
+- `libraspberrypi-bin`: 提供 GPU 库（包含 libbcm_host.so）
+- `libraspberrypi0`: Broadcom GPU 运行时库
 - `--break-system-packages`: Python 3.11+ 需要此参数在系统 Python 中安装包
 
 **替代方案**：如果你使用虚拟环境：
@@ -230,7 +232,37 @@ python3 --version
 sudo apt install -y python3-picamera
 ```
 
-### 问题4：网页无法访问
+### 问题4：libbcm_host.so 找不到（OSError）
+
+**错误信息**：`OSError: libbcm_host.so: cannot open shared object file: No such file or directory`
+
+**原因**：缺少 Broadcom GPU 库，这是 picamera 必需的系统库。
+
+**解决方案**：
+
+```bash
+# 方案 1：安装必需的系统库（推荐）
+sudo apt install -y libraspberrypi-bin libraspberrypi0
+
+# 验证库是否安装成功
+ldconfig -p | grep libbcm_host
+
+# 方案 2：如果在虚拟环境中，退出虚拟环境使用系统 Python
+deactivate  # 退出虚拟环境
+python3 camera_local.py  # 使用系统 Python 运行
+
+# 方案 3：启用 Legacy Camera 支持
+sudo raspi-config
+# 选择：Interface Options -> Legacy Camera -> Enable
+sudo reboot
+```
+
+**重要提示**：
+- picamera 库依赖树莓派特定的硬件库
+- 虚拟环境中的 pip 安装可能缺少系统依赖
+- **推荐使用系统的 python3-picamera**，不要在虚拟环境中用 pip 安装
+
+### 问题5：网页无法访问
 
 - 确保防火墙允许 8000 端口
 - 检查树莓派的 IP 地址：`hostname -I`
