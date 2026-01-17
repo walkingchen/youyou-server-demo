@@ -9,7 +9,7 @@
 
 import os
 from datetime import datetime
-from picamera2 import Picamera2
+from picamera import PiCamera
 import time
 
 # 确保shots文件夹存在
@@ -25,17 +25,17 @@ def main():
 
     # 初始化摄像头
     print("正在初始化摄像头...")
-    picam2 = Picamera2()
+    camera = PiCamera()
 
     # 配置摄像头
-    # preview_config 适用于预览和拍照
-    camera_config = picam2.create_preview_configuration()
-    picam2.configure(camera_config)
+    camera.resolution = (1024, 768)
+    camera.framerate = 30
 
-    # 启动摄像头
-    picam2.start()
+    # 等待摄像头稳定
     print("摄像头已启动！")
-    print("\n提示：由于这是命令行程序，预览窗口可能不会显示")
+    print("等待摄像头稳定...")
+    time.sleep(2)
+    print("\n提示：由于这是命令行程序，预览窗口不会显示")
     print("但拍照功能正常工作。\n")
 
     try:
@@ -52,7 +52,7 @@ def main():
                 filepath = os.path.join(SHOTS_DIR, filename)
 
                 # 捕获图像
-                picam2.capture_file(filepath)
+                camera.capture(filepath)
                 photo_count += 1
 
                 print(f"✓ 照片已保存: {filepath}")
@@ -69,7 +69,7 @@ def main():
 
     finally:
         # 清理资源
-        picam2.stop()
+        camera.close()
         print("摄像头已关闭")
         print(f"总共拍摄了 {photo_count} 张照片")
         print("程序结束")

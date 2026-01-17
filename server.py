@@ -1,11 +1,9 @@
 from flask import Flask, request, render_template, Response, jsonify, send_from_directory
-from picamera2 import Picamera2
-from picamera2.encoders import JpegEncoder
-from picamera2.outputs import FileOutput
+from picamera import PiCamera
 import io
 import os
 from datetime import datetime
-from threading import Lock
+from threading import Lock, Condition
 import time
 
 app = Flask(__name__)
@@ -17,21 +15,32 @@ os.makedirs(SHOTS_DIR, exist_ok=True)
 # 全局摄像头对象和锁
 camera = None
 camera_lock = Lock()
-output_frame = None
-frame_lock = Lock()
+
+class StreamingOutput:
+    """用于流式输出的类"""
+    def __init__(self):
+        self.frame = None
+        self.buffer = io.BytesIO()
+        self.condition = Condition()
+
+    def write(self, buf):
+        if buf.startswith(b'\xff\xd8'):
+            # 新的帧开始
+            self.buffer.truncate()
+            with self.condition:
+                self.frame = self.buffer.getvalue()
+                self.condition.notify_all()
+            self.buffer.seek(0)
+        return self.buffer.write(buf)
 
 def init_camera():
     """初始化摄像头"""
     global camera
     try:
         if camera is None:
-            camera = Picamera2()
-            # 配置摄像头用于视频流
-            config = camera.create_video_configuration(
-                main={"size": (640, 480), "format": "RGB888"}
-            )
-            camera.configure(config)
-            camera.start()
+            camera = PiCamera()
+            camera.resolution = (640, 480)
+            camera.framerate = 24
             print("摄像头初始化成功！")
             time.sleep(2)  # 等待摄像头稳定
     except Exception as e:
@@ -53,22 +62,24 @@ def generate_frames():
         return
 
     try:
-        while True:
-            # 捕获帧
-            frame = camera.capture_array()
+        # 创建流输出对象
+        output = StreamingOutput()
 
-            # 将帧转换为JPEG
-            from PIL import Image
-            img = Image.fromarray(frame)
-            img_byte_arr = io.BytesIO()
-            img.save(img_byte_arr, format='JPEG', quality=85)
-            img_byte_arr.seek(0)
+        # 开始连续捕获
+        camera.start_recording(output, format='mjpeg')
 
-            # 以multipart格式返回帧
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + img_byte_arr.read() + b'\r\n')
+        try:
+            while True:
+                with output.condition:
+                    output.condition.wait()
+                    frame = output.frame
 
-            time.sleep(0.1)  # 控制帧率，大约10fps
+                # 以multipart格式返回帧
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        finally:
+            camera.stop_recording()
+
     except Exception as e:
         print(f"视频流错误: {e}")
 
@@ -184,7 +195,7 @@ def take_photo():
 
         # 拍照
         with camera_lock:
-            camera.capture_file(filepath)
+            camera.capture(filepath)
 
         return jsonify({
             'success': True,

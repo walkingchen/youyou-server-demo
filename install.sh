@@ -26,10 +26,8 @@ sudo apt update
 echo ""
 echo "步骤 2/4: 安装系统依赖..."
 echo "  - Python 3"
-echo "  - picamera2（摄像头库）"
-echo "  - numpy（数值计算）"
-echo "  - Pillow（图像处理）"
-sudo apt install -y python3-pip python3-picamera2 python3-numpy python3-pil
+echo "  - picamera（摄像头库）"
+sudo apt install -y python3-pip python3-picamera
 
 echo ""
 echo "步骤 3/4: 安装 Flask..."
@@ -45,9 +43,7 @@ fi
 echo ""
 echo "步骤 4/4: 验证安装..."
 python3 -c "import flask; print(f'  ✓ Flask {flask.__version__}')" 2>/dev/null || echo "  ✗ Flask 未安装"
-python3 -c "from picamera2 import Picamera2; print('  ✓ picamera2')" 2>/dev/null || echo "  ✗ picamera2 未安装"
-python3 -c "import numpy; print(f'  ✓ numpy {numpy.__version__}')" 2>/dev/null || echo "  ✗ numpy 未安装"
-python3 -c "from PIL import Image; print('  ✓ Pillow')" 2>/dev/null || echo "  ✗ Pillow 未安装"
+python3 -c "from picamera import PiCamera; print('  ✓ picamera')" 2>/dev/null || echo "  ✗ picamera 未安装"
 
 echo ""
 echo "=================================="

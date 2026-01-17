@@ -50,7 +50,7 @@ chmod +x install.sh
 
 **方式二：手动安装**
 
-**重要提示**：树莓派建议使用系统包管理器安装 picamera2、numpy 和 Pillow，而不是通过 pip 安装。
+**重要提示**：树莓派建议使用系统包管理器安装 picamera，而不是通过 pip 安装。
 
 ```bash
 # 更新系统
@@ -58,7 +58,7 @@ sudo apt update
 sudo apt upgrade
 
 # 安装系统依赖（推荐方式）
-sudo apt install -y python3-pip python3-picamera2 python3-numpy python3-pil
+sudo apt install -y python3-pip python3-picamera
 
 # 克隆或下载项目
 cd ~
@@ -70,9 +70,7 @@ pip3 install -r requirements.txt --break-system-packages
 ```
 
 **说明**：
-- `python3-picamera2`: 树莓派官方摄像头库
-- `python3-numpy`: 数值计算库（picamera2 依赖）
-- `python3-pil`: Pillow 图像处理库（系统包名为 PIL）
+- `python3-picamera`: 树莓派官方摄像头库（适用于旧版系统）
 - `--break-system-packages`: Python 3.11+ 需要此参数在系统 Python 中安装包
 
 **替代方案**：如果你使用虚拟环境：
@@ -167,24 +165,27 @@ youyou-server-demo/
 ```python
 def init_camera():
     global camera
-    camera = Picamera2()
-    config = camera.create_video_configuration(
-        main={"size": (640, 480), "format": "RGB888"}
-    )
-    camera.configure(config)
-    camera.start()
+    camera = PiCamera()
+    camera.resolution = (640, 480)
+    camera.framerate = 24
+    time.sleep(2)  # 等待摄像头稳定
 ```
 
 ### 视频流生成
 
 ```python
 def generate_frames():
-    while True:
-        frame = camera.capture_array()
-        img = Image.fromarray(frame)
-        # 转换为 JPEG 并发送
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + img_data + b'\r\n')
+    output = StreamingOutput()
+    camera.start_recording(output, format='mjpeg')
+    try:
+        while True:
+            with output.condition:
+                output.condition.wait()
+                frame = output.frame
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    finally:
+        camera.stop_recording()
 ```
 
 ### 拍照功能
@@ -194,7 +195,7 @@ def generate_frames():
 def take_photo():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"photo_{timestamp}.jpg"
-    camera.capture_file(f"shots/{filename}")
+    camera.capture(f"shots/{filename}")
     return jsonify({'success': True, 'filename': filename})
 ```
 
@@ -219,34 +220,17 @@ sudo usermod -a -G video $USER
 # 重新登录以应用更改
 ```
 
-### 问题3：picamera2 导入错误
+### 问题3：picamera 导入错误
 
 ```bash
 # 确保使用 Python 3
 python3 --version
 
-# 重新安装 picamera2
-sudo apt install -y python3-picamera2
+# 重新安装 picamera
+sudo apt install -y python3-picamera
 ```
 
-### 问题4：Pillow 安装错误（KeyError: '__version__'）
-
-如果在使用 `pip install` 安装 Pillow 时遇到构建错误，请使用系统包：
-
-```bash
-# 使用系统包管理器安装（推荐）
-sudo apt install -y python3-pil
-
-# 或者更新 pip 和 setuptools
-pip3 install --upgrade pip setuptools wheel
-
-# 如果仍然失败，移除版本限制
-pip3 install Pillow --no-build-isolation
-```
-
-**最佳方案**：使用系统包 `python3-pil` 而不是通过 pip 安装 Pillow，这样可以获得预编译的二进制文件，避免构建问题。
-
-### 问题5：网页无法访问
+### 问题4：网页无法访问
 
 - 确保防火墙允许 8000 端口
 - 检查树莓派的 IP 地址：`hostname -I`
@@ -264,8 +248,7 @@ pip3 install Pillow --no-build-isolation
 ## 技术栈
 
 - **后端**：Python 3, Flask
-- **摄像头库**：picamera2
-- **图像处理**：Pillow
+- **摄像头库**：picamera（适用于旧版 Raspberry Pi OS）
 - **前端**：HTML5, CSS3, JavaScript
 - **硬件**：Raspberry Pi, Camera Module
 
