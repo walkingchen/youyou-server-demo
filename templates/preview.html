@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}摄像头预览 - 第1课{% endblock %}
+
+{% block content %}
+<h1>第1课：摄像头实时预览</h1>
+<p class="subtitle">学习目标：了解如何通过网页显示摄像头实时画面</p>
+
+<div class="info-box">
+    <h3>本课内容</h3>
+    <ul>
+        <li>启动摄像头</li>
+        <li>实时视频流传输</li>
+        <li>在网页中显示摄像头画面</li>
+    </ul>
+</div>
+
+<div class="camera-container">
+    <h2>实时预览</h2>
+    <img src="{{ url_for('video_feed') }}" class="camera-feed" alt="摄像头预览">
+</div>
+
+<div class="controls">
+    <a href="/" class="btn">返回首页</a>
+    <a href="/camera/capture" class="btn">下一课：拍照功能 →</a>
+</div>
+{% endblock %}
+
+{% block extra_nav %}
+    <a href="/camera/capture">第2课：拍照</a>
+    <a href="/camera/gallery">第3课：相册</a>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}完整功能 - 第3课{% endblock %}
+
+{% block content %}
+<h1>第3课：完整功能（预览 + 拍照 + 相册）</h1>
+<p class="subtitle">学习目标：整合所有功能，展示已拍摄的照片</p>
+
+<div class="info-box">
+    <h3>本课内容</h3>
+    <ul>
+        <li>实时预览摄像头画面</li>
+        <li>点击按钮拍照</li>
+        <li>查看所有已拍摄的照片</li>
+        <li>点击照片可查看大图</li>
+    </ul>
+</div>
+
+<div class="camera-container">
+    <h2>实时预览</h2>
+    <img src="{{ url_for('video_feed') }}" class="camera-feed" alt="摄像头预览">
+</div>
+
+<div class="controls">
+    <button class="btn btn-success" onclick="capturePhoto()">📷 拍照</button>
+    <button class="btn" onclick="refreshGallery()">🔄 刷新相册</button>
+    <a href="/camera/capture" class="btn">← 上一课</a>
+</div>
+
+<div id="status-message"></div>
+
+<div style="margin-top: 30px;">
+    <h2>照片相册 (共 {{ photos|length }} 张)</h2>
+    {% if photos %}
+    <div class="gallery" id="photo-gallery">
+        {% for photo in photos %}
+        <div>
+            <img src="{{ url_for('static', filename='../shots/' + photo) }}"
+                 alt="{{ photo }}"
+                 onclick="viewPhoto('{{ photo }}')">
+            <p style="text-align: center; font-size: 12px; color: #666; margin-top: 5px;">{{ photo }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align: center; color: #666; padding: 20px;">还没有拍摄照片，点击上方"拍照"按钮开始吧！</p>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_nav %}
+    <a href="/camera/preview">第1课：预览</a>
+    <a href="/camera/capture">第2课：拍照</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function capturePhoto() {
+    const statusDiv = document.getElementById('status-message');
+    statusDiv.innerHTML = '<div class="status-message">正在拍照...</div>';
+
+    fetch('/camera/take_photo', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = `<div class="status-message status-success">✓ ${data.message}<br>文件: ${data.filename}</div>`;
+            // 自动刷新相册
+            setTimeout(() => {
+                refreshGallery();
+            }, 1000);
+        } else {
+            statusDiv.innerHTML = `<div class="status-message status-error">✗ ${data.message}</div>`;
+        }
+    })
+    .catch(error => {
+        statusDiv.innerHTML = '<div class="status-message status-error">✗ 拍照失败，请重试</div>';
+        console.error('Error:', error);
+    });
+}
+
+function refreshGallery() {
+    location.reload();
+}
+
+function viewPhoto(filename) {
+    window.open('/shots/' + filename, '_blank');
+}
+</script>
+{% endblock %}
