@@ -33,21 +33,59 @@ sudo raspi-config
 
 ### 3. 安装依赖
 
+**方式一：自动安装（推荐）**
+
+项目提供了自动安装脚本，一键完成所有依赖安装：
+
+```bash
+# 克隆或下载项目
+cd ~
+git clone <your-repo-url>
+cd youyou-server-demo
+
+# 运行自动安装脚本
+chmod +x install.sh
+./install.sh
+```
+
+**方式二：手动安装**
+
+**重要提示**：树莓派建议使用系统包管理器安装 picamera2、numpy 和 Pillow，而不是通过 pip 安装。
+
 ```bash
 # 更新系统
 sudo apt update
 sudo apt upgrade
 
-# 安装系统依赖
-sudo apt install -y python3-pip python3-picamera2 python3-opencv
+# 安装系统依赖（推荐方式）
+sudo apt install -y python3-pip python3-picamera2 python3-numpy python3-pil
 
 # 克隆或下载项目
 cd ~
 git clone <your-repo-url>
 cd youyou-server-demo
 
-# 安装 Python 依赖
-pip3 install -r requirements.txt
+# 安装 Python 依赖（仅安装 Flask 等纯 Python 包）
+pip3 install -r requirements.txt --break-system-packages
+```
+
+**说明**：
+- `python3-picamera2`: 树莓派官方摄像头库
+- `python3-numpy`: 数值计算库（picamera2 依赖）
+- `python3-pil`: Pillow 图像处理库（系统包名为 PIL）
+- `--break-system-packages`: Python 3.11+ 需要此参数在系统 Python 中安装包
+
+**替代方案**：如果你使用虚拟环境：
+
+```bash
+# 创建虚拟环境（带系统包访问权限）
+python3 -m venv venv --system-site-packages
+
+# 激活虚拟环境
+source venv/bin/activate
+
+# 安装 Flask（其他包从系统继承）
+pip install Flask
 ```
 
 ### 4. 运行项目
@@ -191,7 +229,24 @@ python3 --version
 sudo apt install -y python3-picamera2
 ```
 
-### 问题4：网页无法访问
+### 问题4：Pillow 安装错误（KeyError: '__version__'）
+
+如果在使用 `pip install` 安装 Pillow 时遇到构建错误，请使用系统包：
+
+```bash
+# 使用系统包管理器安装（推荐）
+sudo apt install -y python3-pil
+
+# 或者更新 pip 和 setuptools
+pip3 install --upgrade pip setuptools wheel
+
+# 如果仍然失败，移除版本限制
+pip3 install Pillow --no-build-isolation
+```
+
+**最佳方案**：使用系统包 `python3-pil` 而不是通过 pip 安装 Pillow，这样可以获得预编译的二进制文件，避免构建问题。
+
+### 问题5：网页无法访问
 
 - 确保防火墙允许 8000 端口
 - 检查树莓派的 IP 地址：`hostname -I`
