@@ -132,6 +132,11 @@ def test():
     print(request.headers)
     return "ok"
 
+@app.route("/mama")
+def mama():
+    """显示 mama.jpg 图片"""
+    return send_from_directory(SHOTS_DIR, 'mama.jpg')
+
 # ========== 摄像头相关路由 ==========
 
 @app.route('/camera/preview')
