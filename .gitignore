@@ -1,1 +1,5 @@
 venv/
+shots/*.jpg
+shots/*.png
+__pycache__/
+*.pyc

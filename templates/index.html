@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}摄像头教学系统 - 首页{% endblock %}
+
+{% block content %}
+<h1>📸 树莓派摄像头教学系统</h1>
+<p class="subtitle">循序渐进学习摄像头控制</p>
+
+<div class="info-box">
+    <h3>欢迎！</h3>
+    <p>这是一个用于学习的摄像头控制系统，运行在 Raspberry Pi Zero W 上。</p>
+    <p>每一课都会在上一课的基础上增加新功能，帮助你逐步理解如何控制摄像头。</p>
+</div>
+
+<div style="margin-top: 30px;">
+    <h2>教学课程</h2>
+
+    <div style="margin: 20px 0; padding: 20px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+        <h3 style="color: #667eea; margin-bottom: 10px;">第1课：摄像头实时预览</h3>
+        <p style="color: #4a5568; margin-bottom: 15px;">学习如何启动摄像头并在网页中显示实时画面</p>
+        <ul style="margin-left: 20px; color: #4a5568;">
+            <li>了解视频流的概念</li>
+            <li>在网页中嵌入实时视频</li>
+            <li>基础的摄像头控制</li>
+        </ul>
+        <a href="/camera/preview" class="btn" style="margin-top: 15px;">开始学习 →</a>
+    </div>
+
+    <div style="margin: 20px 0; padding: 20px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #48bb78;">
+        <h3 style="color: #48bb78; margin-bottom: 10px;">第2课：预览 + 拍照功能</h3>
+        <p style="color: #4a5568; margin-bottom: 15px;">在预览的基础上添加拍照功能</p>
+        <ul style="margin-left: 20px; color: #4a5568;">
+            <li>添加交互按钮</li>
+            <li>使用Ajax发送请求</li>
+            <li>保存照片到服务器</li>
+            <li>显示操作反馈</li>
+        </ul>
+        <a href="/camera/capture" class="btn btn-success" style="margin-top: 15px;">开始学习 →</a>
+    </div>
+
+    <div style="margin: 20px 0; padding: 20px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #ed8936;">
+        <h3 style="color: #ed8936; margin-bottom: 10px;">第3课：完整功能（预览 + 拍照 + 相册）</h3>
+        <p style="color: #4a5568; margin-bottom: 15px;">整合所有功能，展示照片相册</p>
+        <ul style="margin-left: 20px; color: #4a5568;">
+            <li>显示所有已拍摄的照片</li>
+            <li>网格布局展示相册</li>
+            <li>点击查看大图</li>
+            <li>完整的用户体验</li>
+        </ul>
+        <a href="/camera/gallery" class="btn" style="margin-top: 15px; background: #ed8936;">开始学习 →</a>
+    </div>
+</div>
+
+<div class="info-box" style="margin-top: 30px; border-left-color: #f56565;">
+    <h3 style="color: #f56565;">本地命令行程序</h3>
+    <p>除了网页版，我们还提供了一个本地命令行程序：</p>
+    <pre style="background: #2d3748; color: #68d391; padding: 15px; border-radius: 5px; margin-top: 10px; overflow-x: auto;">python3 camera_local.py</pre>
+    <p style="margin-top: 10px;">运行后按 's' 键拍照，按 'q' 键退出。</p>
+</div>
+
+{% endblock %}

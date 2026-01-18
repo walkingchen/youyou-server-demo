@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}摄像头拍照 - 第2课{% endblock %}
+
+{% block content %}
+<h1>第2课：摄像头预览 + 拍照</h1>
+<p class="subtitle">学习目标：在预览的基础上添加拍照功能</p>
+
+<div class="info-box">
+    <h3>本课内容</h3>
+    <ul>
+        <li>在预览画面上添加拍照按钮</li>
+        <li>使用Ajax发送拍照请求</li>
+        <li>保存照片到服务器</li>
+        <li>显示拍照成功提示</li>
+    </ul>
+</div>
+
+<div class="camera-container">
+    <h2>实时预览</h2>
+    <img src="{{ url_for('video_feed') }}" class="camera-feed" alt="摄像头预览">
+</div>
+
+<div class="controls">
+    <button class="btn btn-success" onclick="capturePhoto()">📷 拍照</button>
+    <a href="/camera/preview" class="btn">← 上一课</a>
+    <a href="/camera/gallery" class="btn">下一课：相册 →</a>
+</div>
+
+<div id="status-message"></div>
+
+{% endblock %}
+
+{% block extra_nav %}
+    <a href="/camera/preview">第1课：预览</a>
+    <a href="/camera/gallery">第3课：相册</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function capturePhoto() {
+    const statusDiv = document.getElementById('status-message');
+    statusDiv.innerHTML = '<div class="status-message">正在拍照...</div>';
+
+    fetch('/camera/take_photo', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = `<div class="status-message status-success">✓ ${data.message}<br>文件: ${data.filename}</div>`;
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        } else {
+            statusDiv.innerHTML = `<div class="status-message status-error">✗ ${data.message}</div>`;
+        }
+    })
+    .catch(error => {
+        statusDiv.innerHTML = '<div class="status-message status-error">✗ 拍照失败，请重试</div>';
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}
