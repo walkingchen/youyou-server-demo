@@ -48,8 +48,8 @@ def init_camera():
             # 配置摄像头用于视频流和拍照
             # 分辨率低一点、帧率低一点，CPU 压力小
             config = camera.create_video_configuration(
-                main={"size": (320, 240), "format": "YUV420"},
-                controls={"FrameRate": 10}
+                main={"size": (640, 480), "format": "YUV420"},
+                controls={"FrameRate": 15}
             )
             camera.configure(config)
             camera.start()
@@ -239,4 +239,4 @@ def serve_photo(filename):
 
 if __name__ == "__main__":
     # 0.0.0.0 表示任何设备都能访问这个服务
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=False)
